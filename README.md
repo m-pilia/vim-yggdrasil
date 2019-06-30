@@ -6,6 +6,12 @@ vim-yggdrasil: general purpose tree viewer for vim
 
 This plugin implements a general purpose tree viewer library for vim.
 
+WORK IN PROGRESS
+================
+
+Beware, this plugin is under construction. The API is not finalised nor
+stable. For details, please see [issue #2](https://github.com/m-pilia/vim-yggdrasil/issues/2).
+
 Example
 =======
 
