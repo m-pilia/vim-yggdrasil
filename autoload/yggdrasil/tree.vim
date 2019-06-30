@@ -1,7 +1,5 @@
-scriptencoding utf-8
-
 function! yggdrasil#tree#get_node_id_under_cursor() dict abort
-    let l:id = str2nr(matchstr(getline('.'), '\v\[@<=\d+\]@='))
+    let l:id = str2nr(matchstr(getline('.'), '\v\[@<=\d+(\]$)@='))
     return l:self.root.find(l:id)
 endfunction
 
@@ -43,6 +41,7 @@ endf
 function! yggdrasil#tree#new(size, position, orientation) abort
     let l:position = a:position =~# '\v^t|l' ? 'topleft' : 'botright'
     let l:orientation = a:orientation =~# '^v' ? 'vnew' : 'new'
+
     exec l:position . ' ' . a:size . l:orientation
 
     let b:yggdrasil_tree = {
@@ -56,4 +55,7 @@ function! yggdrasil#tree#new(size, position, orientation) abort
     \ }
 
     setlocal filetype=yggdrasil
+
+    call yggdrasil#filetype#syntax()
+    call yggdrasil#filetype#settings()
 endfunction
