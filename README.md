@@ -16,31 +16,58 @@ Example
 =======
 
 ```viml
-function! Echo_label(node) abort
-    echo 'You clicked ' . a:node.label
+" Minimal example of tree data generator
+let s:tree = {
+\     0: [1, 2],
+\     1: [3],
+\     2: [4, 5],
+\     3: [],
+\     4: [6],
+\     5: [],
+\     6: [],
+\ }
+
+function! s:get_parent(id) abort
+    for [l:parent, l:children] in items(s:tree)
+        if index(l:children, a:id) > 0
+            return l:parent
+        endif
+    endfor
 endfunction
 
-function! Dynamic_append(node) abort
-    echo 'Dynamically adding a children to ' . a:node.label
-    call b:yggdrasil_tree.insert('New node!', function('Echo_label'), 0, a:node.id)
+function! s:command_callback(id) abort
+    echom 'Calling object ' . a:id . '!'
 endfunction
 
-" Create a split and initialise it as an Yggdrasil tree
-call yggdrasil#tree#new(50, 'topright', 'vertical')
+function! s:number_to_treeitem(id) abort
+    return {
+    \   'id': a:id,
+    \   'command': function('s:command_callback', [a:id]),
+    \   'collapsibleState': len(s:tree[a:id]) > 0 ? 'collapsed' : 'none',
+    \   'label': 'Label of node ' . a:id,
+    \ }
+endfunction
 
-" Add a root node to the tree
-call b:yggdrasil_tree.insert('Root node!',
-\                            function('Echo_label'),
-\                            0)
+function! s:children(Callback, ...) abort
+    let l:children = [0]
+    if a:0 > 0
+        if has_key(s:tree, a:1)
+            let l:children = s:tree[a:1]
+        else
+            call a:Callback('failure')
+        endif
+    endif
+    call a:Callback('success', l:children)
+endfunction
 
-" Add a children to the root node
-call b:yggdrasil_tree.insert('Children!',
-\                            function('Echo_label'),
-\                            function('Dynamic_append'),
-\                            b:yggdrasil_tree.root.id)
+" Define the tree data provider
+let s:provider = {
+\ 'getChildren': function('s:children'),
+\ 'getParent': {callback, x -> callback('success', s:get_parent(x))},
+\ 'getTreeItem': {callback, x -> callback('success', s:number_to_treeitem(x))},
+\ }
 
-" Render the tree
-call b:yggdrasil_tree.render()
+call yggdrasil#tree#new(s:provider)
 ```
 
 Settings
