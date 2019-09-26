@@ -46,7 +46,7 @@ function! yggdrasil#filetype#settings() abort
         \ :call b:yggdrasil_tree.set_collapsed_under_cursor(v:true, v:true)<cr>
 
     nnoremap <silent> <buffer> <Plug>(yggdrasil-execute-node)
-        \ :call b:yggdrasil_tree.get_node_id_under_cursor().exec()<cr>
+        \ :call b:yggdrasil_tree.exec_node_under_cursor()<cr>
 
     if !exists('g:yggdrasil_no_default_maps')
         nmap <silent> <buffer> o    <Plug>(yggdrasil-toggle-node)
