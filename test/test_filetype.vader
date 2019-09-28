@@ -1,0 +1,76 @@
+Before:
+  new
+  source test/utils.vim
+
+After:
+  unlet! g:yggdrasil_no_default_maps
+  bwipeout!
+
+Execute(test yggdrasil#filetype#syntax):
+  call yggdrasil#filetype#syntax()
+
+  syntax list YggdrasilId
+  syntax list YggdrasilMarkCollapsed
+  syntax list YggdrasilMarkExpanded
+  syntax list YggdrasilLabel
+
+Execute(test yggdrasil#filetype#settings):
+  call yggdrasil#filetype#settings()
+
+  AssertEqual 'wipe', &bufhidden
+  AssertEqual 'nofile', &buftype
+  AssertEqual 'nvic', &concealcursor
+  AssertEqual 3, &conceallevel
+  AssertEqual 0, &foldcolumn
+  AssertEqual 'manual', &foldmethod
+  AssertEqual 0, &buflisted
+  AssertEqual 0, &foldenable
+  AssertEqual 0, &hlsearch
+  AssertEqual 0, &list
+  AssertEqual 0, &modifiable
+  AssertEqual 0, &number
+  AssertEqual 0, &spell
+  AssertEqual 0, &swapfile
+  AssertEqual 0, &wrap
+
+  AssertMapping
+  \   'nmap',
+  \   '<Plug>(yggdrasil-toggle-node)',
+  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(-1, v:false)<CR>'
+  AssertMapping
+  \   'nmap',
+  \   '<Plug>(yggdrasil-open-node)',
+  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(v:false, v:false)<CR>'
+  AssertMapping
+  \   'nmap',
+  \   '<Plug>(yggdrasil-close-node)',
+  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(v:true, v:false)<CR>'
+  AssertMapping
+  \   'nmap',
+  \   '<Plug>(yggdrasil-open-subtree)',
+  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(v:false, v:true)<CR>'
+  AssertMapping
+  \   'nmap',
+  \   '<Plug>(yggdrasil-close-subtree)',
+  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(v:true, v:true)<CR>'
+  AssertMapping
+  \   'nmap',
+  \   '<Plug>(yggdrasil-execute-node)',
+  \   ':call b:yggdrasil_tree.exec_node_under_cursor()<CR>'
+
+  AssertMapping 'nmap', 'o', '<Plug>(yggdrasil-toggle-node)'
+  AssertMapping 'nmap', 'O', '<Plug>(yggdrasil-open-subtree)'
+  AssertMapping 'nmap', 'C', '<Plug>(yggdrasil-close-subtree)'
+  AssertMapping 'nmap', '<CR>', '<Plug>(yggdrasil-execute-node)'
+  AssertMapping 'nmap', 'q', ':q<CR>'
+
+Execute(test yggdrasil#filetype#settings with g:yggdrasil_no_default_maps):
+  let g:yggdrasil_no_default_maps = 1
+
+  call yggdrasil#filetype#settings()
+
+  AssertNoMapping 'nmap', 'o'
+  AssertNoMapping 'nmap', 'O'
+  AssertNoMapping 'nmap', 'C'
+  AssertNoMapping 'nmap', '<CR>'
+  AssertNoMapping 'nmap', 'q'
