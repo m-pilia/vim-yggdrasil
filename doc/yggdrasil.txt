@@ -5,10 +5,7 @@
 CONTENTS                                                  *yggdrasil-contents*
 
     Introduction.....................|yggdrasil-introduction|
-    Design...........................|yggdrasil-design|
     Functions........................|yggdrasil-functions|
-      Node functions.................|yggdrasil-node-functions|
-      Tree functions.................|yggdrasil-tree-functions|
     Options..........................|yggdrasil-options|
       g:yggdrasil_no_default_maps....|g:yggdrasil_no_default_maps|
     Mappings.........................|yggdrasil-mappings|
@@ -20,128 +17,134 @@ Introduction                                          *yggdrasil-introduction*
 
 Yggdrasil is a self-contained VimScript library to create tree-like buffers.
 
-==============================================================================
-Design                                                      *yggdrasil-design*
+It supports lazy loading of nodes, making it capable to efficiently explore
+large trees with many nested nodes, and supports asynchronous execution via
+a callback mechanism.
 
-The library provides two types of object: nodes and trees.
-
-A node object represents a node in an Yggdrasil tree. Each node has the
-following fields, defining its state:
- * id: A unique numeric identifier. When rendering the tree, the id is
-   printed at the end of the node representation, and it is concealed to
-   not be visible by the user (|conceal|). This allows to quickly know
-   which node is under the cursor when interacting with the tree.
- * label: A string, representing the content of the node. It will be displayed
-   when rendering the tree.
- * parent: Reference to the parent node.
- * collapsed: Boolean value defining whether the node should be collapsed or
-   expanded when rendering the tree.
- * lazy_open: Function object, intended to lazily populate the list of
-   children for a node on the first time the node is expanded. It takes as its
-   only argument a reference to the node itself. When a node having a callable
-   lazy_open member is expanded for the first time, the callback is executed,
-   and then the lazy_open field is set to v:null and on future expansions of
-   the node, only the content of the children field will be considered.
- * callback: Function object, which will be called when executing the action
-   associated to the node. It takes as unique argument a reference to the node
-   itself.
- * children: List of children node objects.
-A node object has a set of member functions that allow to interact with it
-(|yggdrasil-node-functions|).
-
-A tree object represents the state of an Yggdrasil tree, and each Yggdrasil
-buffer is associated to a tree object, stored in a buffer-local variable. Each
-tree object has the following fields:
- * bufnr: Buffer number associated to the Yggdrasil tree buffer.
- * maxid: Highest id of any child node in the tree.
- * root: reference to the root node in the tree.
-A tree object has a set of member functions that allow to interact with it
-(|yggdrasil-tree-functions|).
+The tree view is populated using a provider object with an API similar to
+VSCode's TreeDataProvider
+(https://code.visualstudio.com/api/references/vscode-api#TreeDataProvider).
 
 ==============================================================================
 Functions                                                *yggdrasil-functions*
 
-yggdrasil#node#new({id}, {label}, {parent}, {callback}, {lazy_open})
+yggdrasil#tree#new({provider})                            *yggdrasil#tree#new*
 
-    Return a new node object, with its fields set to the arguments passed to
-    the function.
+    Turns the current buffer into an Yggdrasil tree view. Tree data is
+    retrieved from the given {provider} object. The state of the tree is
+    stored in a buffer-local variable called b:yggdrasil_tree.
 
-yggdrasil#tree#new({size}, {position}, {orientation})
+    The {provider} object is a dictionary exposing three member functions:
 
-    Create a new window with given {position} (|topleft| or |botright|),
-    {orientation} (horizontal or vertical), and {size} (number of rows or
-    columns if vertical or horizontal respectively). The window contains a new
-    buffer initialised as an Yggdrasil tree. Create and initialise a tree
-    object, stored in the b:yggdrasil_tree variable, containing no nodes (the
-    `root` is set to `{}`).
+     * getChildren({callback}, ...)
+       When called with no optional argument, produce the object at the root
+       of the tree. When called with an optional argument equal to an object
+       in the tree, produce a list of children objects.
 
-------------------------------------------------------------------------------
-Node functions                                      *yggdrasil-node-functions*
+     * getParent({callback}, {object})
+       Produce the parent for the given {object} in the tree.
 
-yggdrasil#node#set_collapsed({collapsed}, {recursive})
+     * getTreeItem({callback}, {object})
+       Produce the tree item representation of the given {object} in the tree.
+       The tree item representation is a dictionary containing the following
+       fields:
+        + id: unique string identifier for the node in the tree
+        + collapsibleState: string value, equal to:
+           - 'collapsed' for an inner node initially collapsed
+           - 'expanded' for an inner node initially expanded
+           - 'none' for a leaf node that cannot be expanded nor collapsed
+        + command: function object that takes no arguments, it runs when a
+          node is executed by the user
+        + label: string representing the node in the view
 
-    Set the node to be collapsed or expanded.
+    Each of these methods takes as first argument a {callback} function
+    object. The method sends the result to the view by calling the {callback}.
+    The first argument to the {callback} is a string denoting the status of
+    the operation. If the status is equal to 'success', the result will be
+    processed by the view. When the status equals to success, a second
+    optional argument can be passed to the callback, containing the result of
+    the operation.
 
-    When {collapsed} evaluates to true, the node is
-    collapsed, when it evaluates to false it is expanded, when it is equal to
-    -1 the node is toggled (it is expanded if it was collapsed, and vice
-    versa).
+    The tree object has some member functions that allow to interact with it:
 
-    If {recursive} evaluates to true, the change is propagated recursively to
-    all the nodes in the sub-tree rooted in this node. If it evaluates to
-    false, only this node is changed.
+     * set_collapsed_under_cursor({collapsed}, {recursive})
+       If {collapsed} is 1, collapse the node currently under cursor, if it is
+       0 expand it, if it is -1 toggle its collapsing state. If {recursive} is
+       true, the change is propagated recursively to the whole subtree rooted
+       in the node under the cursor.
 
-yggdrasil#node#find({id})
+     * exec_node_under_cursor()
+       Trigger the action associated to the execution of the node currently
+       under the cursor.
 
-    Return the node object whose id is equal to {id}.
+     * update()
+       Update the tree, used e.g. to notify the view that the structure of the
+       tree or the content of some nodes has changed.
 
-yggdrasil#node#exec()
+    Other members of the tree object are implementation specific and not part
+    of the public API.
 
-    Execute the callback action associated to this node.
+    Example:
+>
+    let s:tree = {
+    \     0: [1, 2],
+    \     1: [3],
+    \     2: [4, 5],
+    \     3: [],
+    \     4: [6],
+    \     5: [],
+    \     6: [],
+    \ }
 
-yggdrasil#node#level()
+    function! s:command_callback(id) abort
+        echom 'Calling object ' . a:id . '!'
+    endfunction
 
-    Return the depth level of the node in the tree. The level is defined
-    recursively: the root has depth 0, and each node has depth equal to the
-    depth of its parent increased by 1.
+    function! s:number_to_parent(id) abort
+        for [l:parent, l:children] in items(s:tree)
+            if index(l:children, a:id) > 0
+                return l:parent
+            endif
+        endfor
+    endfunction
 
-yggdrasil#node#render({level})
+    function! s:number_to_treeitem(id) abort
+        return {
+        \   'id': num2str(a:id),
+        \   'command': function('s:command_callback', [a:id]),
+        \   'collapsibleState': len(s:tree[a:id]) > 0 ? 'collapsed' : 'none',
+        \   'label': 'Label of node ' . a:id,
+        \ }
+    endfunction
 
-    Return the string representation of the node. The {level} argument is
-    passed for convenience, in order to avoid re-computing the depth
-    separately.
+    function! s:GetChildren(Callback, ...) abort
+        let l:children = [0]
+        if a:0 > 0
+            if has_key(s:tree, a:1)
+                let l:children = s:tree[a:1]
+            else
+                call a:Callback('failure')
+            endif
+        endif
+        call a:Callback('success', l:children)
+    endfunction
 
-yggdrasil#node#append({id}, {label}, {callback}, {lazy_open})
+    function! s:GetParent(Callback, object) abort
+        call a:Callback('success', s:number_to_parent(a:object))
+    endfunction
 
-    Append a new children to the current node, with fields given by the
-    arguments.
+    function! s:GetTreeItem(Callback, object) abort
+        call a:Callback('success', s:number_to_treeitem(a:object))
+    endfunction
 
-------------------------------------------------------------------------------
-Tree functions                                      *yggdrasil-tree-functions*
+    let s:provider = {
+    \ 'getChildren': function('s:GetChildren'),
+    \ 'getParent': function('s:GetParent'),
+    \ 'getTreeItem': function('s:GetTreeItem'),
+    \ }
 
-yggdrasil#tree#get_node_id_under_cursor()
-
-    Return the id of the node under the cursor.
-
-yggdrasil#tree#set_collapsed_under_cursor({collapsed}, {recursive})
-
-    Expand or collapse the node under cursor, and render the tree.
-    Please refer to *yggdrasil#node#set_collapsed()* for details about the
-    arguments and behaviour.
-
-yggdrasil#tree#insert({label}, {callback}, {lazy_open} [, {parent_id}])
-
-    Insert a new node in the tree, with label set to {label}, execution action
-    defined by {callback}, and lazy opening callback defined by {lazy_open}.
-
-    If the tree is empty or {parent_id} is not specified, the new node becomes
-    the root of the tree, and the previous root (if any) will become a child
-    of the new node. Otherwise, if {parent_id} is given, the new node will
-    have as parent the node in the tree whose id equals {parent_id}.
-
-yggdrasil#tree#render()
-
-    Render the tree, replacing the current content of the buffer.
+    call yggdrasil#tree#new(s:provider)
+<
 
 ==============================================================================
 Options                                                    *yggdrasil-options*
