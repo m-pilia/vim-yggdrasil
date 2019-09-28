@@ -11,6 +11,7 @@ Before:
   let b:yggdrasil_tree = {
   \   'maxid': -1,
   \   'provider': provider,
+  \   'root': {},
   \ }
   let object = {'object': v:true}
   let tree_item = {
@@ -213,7 +214,7 @@ Execute(Test s:node_set_collapsed lazy):
   \ }
 
   let render_mock = GetFunctionMock()
-  let node.tree.render = render_mock.function
+  let b:yggdrasil_tree.root.render = render_mock.function
 
   call node.set_collapsed(-1, 0)
 
@@ -230,7 +231,6 @@ Execute(Test yggdrasil#tree#new):
   AssertEqual provider, b:yggdrasil_tree.provider
   AssertEqual type({-> 0}), type(b:yggdrasil_tree.set_collapsed_under_cursor)
   AssertEqual type({-> 0}), type(b:yggdrasil_tree.exec_node_under_cursor)
-  AssertEqual type({-> 0}), type(b:yggdrasil_tree.render)
   AssertEqual type({-> 0}), type(b:yggdrasil_tree.update)
 
 Execute(Test s:tree_set_collapsed_under_cursor expand):

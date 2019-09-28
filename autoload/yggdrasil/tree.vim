@@ -4,7 +4,7 @@ function! s:node_get_tree_item_cb(node, object, status, tree_item) abort
     if a:status ==? 'success'
         let l:new_node = s:node_new(a:node.tree, a:object, a:tree_item, a:node.id)
         call add(a:node.children, l:new_node)
-        call l:new_node.tree.render()
+        call s:tree_render(l:new_node.tree)
     endif
 endfunction
 
@@ -97,7 +97,7 @@ function! s:tree_set_root_cb(tree, object, status, tree_item) abort
     if a:status ==? 'success'
         let a:tree.maxid = -1
         let a:tree.root = s:node_new(a:tree, a:object, a:tree_item, {})
-        call a:tree.render()
+        call s:tree_render(a:tree)
     endif
 endfunction
 
@@ -109,16 +109,16 @@ endfunction
 function! s:tree_set_collapsed_under_cursor(collapsed, recursive) dict abort
     let l:node = s:get_id_under_cursor(l:self)
     call l:node.set_collapsed(a:collapsed, a:recursive)
-    call l:self.render()
+    call s:tree_render(l:self)
 endfunction
 
 function! s:tree_exec_node_under_cursor() dict abort
     call s:get_id_under_cursor(l:self).exec()
 endfunction
 
-function! s:tree_render() dict abort
+function! s:tree_render(tree) abort
     let l:cursor = getpos('.')
-    let l:text = l:self.root.render(0)
+    let l:text = a:tree.root.render(0)
 
     setlocal modifiable
     silent 1,$delete _
@@ -141,7 +141,6 @@ function! yggdrasil#tree#new(provider) abort
     \ 'provider': a:provider,
     \ 'set_collapsed_under_cursor': function('s:tree_set_collapsed_under_cursor'),
     \ 'exec_node_under_cursor': function('s:tree_exec_node_under_cursor'),
-    \ 'render': function('s:tree_render'),
     \ 'update': function('s:tree_update'),
     \ }
 
