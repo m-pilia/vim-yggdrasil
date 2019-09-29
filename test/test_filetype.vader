@@ -2,20 +2,29 @@ Before:
   new
   source test/utils.vim
 
+  let b:script = 'autoload/yggdrasil/tree.vim'
+
 After:
   unlet! g:yggdrasil_no_default_maps
+  unlet! b:script
+  unlet! Filetype_syntax
+  unlet! Filetype_settings
   bwipeout!
 
-Execute(test yggdrasil#filetype#syntax):
-  call yggdrasil#filetype#syntax()
+Execute(test filetype_syntax):
+  let Filetype_syntax = GetFunction(b:script, 'filetype_syntax')
+
+  call Filetype_syntax()
 
   syntax list YggdrasilId
   syntax list YggdrasilMarkCollapsed
   syntax list YggdrasilMarkExpanded
   syntax list YggdrasilLabel
 
-Execute(test yggdrasil#filetype#settings):
-  call yggdrasil#filetype#settings()
+Execute(test filetype_settings):
+  let Filetype_settings = GetFunction(b:script, 'filetype_settings')
+
+  call Filetype_settings()
 
   AssertEqual 'wipe', &bufhidden
   AssertEqual 'nofile', &buftype
@@ -64,10 +73,11 @@ Execute(test yggdrasil#filetype#settings):
   AssertMapping 'nmap', '<CR>', '<Plug>(yggdrasil-execute-node)'
   AssertMapping 'nmap', 'q', ':q<CR>'
 
-Execute(test yggdrasil#filetype#settings with g:yggdrasil_no_default_maps):
-  let g:yggdrasil_no_default_maps = 1
+Execute(test filetype_settings with g:yggdrasil_no_default_maps):
+  let Filetype_settings = GetFunction(b:script, 'filetype_settings')
 
-  call yggdrasil#filetype#settings()
+  let g:yggdrasil_no_default_maps = 1
+  call Filetype_settings()
 
   AssertNoMapping 'nmap', 'o'
   AssertNoMapping 'nmap', 'O'
