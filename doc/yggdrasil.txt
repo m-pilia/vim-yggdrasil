@@ -5,6 +5,7 @@
 CONTENTS                                                  *yggdrasil-contents*
 
     Introduction.....................|yggdrasil-introduction|
+    Installation.....................|yggdrasil-installation|
     Functions........................|yggdrasil-functions|
     Options..........................|yggdrasil-options|
       g:yggdrasil_no_default_maps....|g:yggdrasil_no_default_maps|
@@ -24,6 +25,19 @@ a callback mechanism.
 The tree view is populated using a provider object with an API similar to
 VSCode's TreeDataProvider
 (https://code.visualstudio.com/api/references/vscode-api#TreeDataProvider).
+
+==============================================================================
+Installation                                          *yggdrasil-installation*
+
+Yggdrasil can be installed in two different ways, either as an external
+dependency, or it can be embedded in another plugin's file structure. To be
+used as an external dependency, Yggdrasil can be installed as a regular
+plugin.
+
+To embed Yggdrasil within a foreign plugin's file structure, install Yggdrasil
+locally, then use the |YggdrasilPlant| command, specifying the root folder of
+the host plugin, and optionally a name to be used as a namespace (by default,
+the name of the host plugin root folder).
 
 ==============================================================================
 Functions                                                *yggdrasil-functions*
@@ -144,6 +158,29 @@ yggdrasil#tree#new({provider})                            *yggdrasil#tree#new*
     \ }
 
     call yggdrasil#tree#new(s:provider)
+<
+
+==============================================================================
+Commands                                                  *yggdrasil-commands*
+
+YggdrasilPlant {plugin_folder} [{plugin_name}]                *YggdrasilPlant*
+
+    Embed Yggdrasil in a foreign plugin's file structure. The foreign plugin
+    file structure is rooted in {plugin_folder}, that contains the autoload,
+    plugin, doc folders etc. An optional {plugin_name} can be passed as
+    argument, if not the name of the {plugin_folder} will be used.
+
+    The command will install a copy of the Yggdrasil autoload files in the
+    autoload folder of the foreign plugin. The autoload prefix will be in
+    the form {plugin_name}#yggdrasil#file_name#function_name().
+
+    Example:
+>
+    " Will install Yggdrasil in /foo/myplugin/autoload/myplugin/yggdrasil
+    YggdrasilPlant /foo/myplugin
+
+    " Will install Yggdrasil il /foo/myplugin/autoload/bar/yggdrasil
+    YggdrasilPlant /foo/myplugin bar
 <
 
 ==============================================================================

@@ -1,0 +1,54 @@
+Before:
+  call system('rm -rf test/output/*')
+
+  let plugin_root = 'test/output/myplugin'
+
+  function! Assert_installation(plugin_root, plugin_prefix) abort
+    let l:installed_file = a:plugin_root . '/autoload/' . a:plugin_prefix . '/yggdrasil/tree.vim'
+    let l:expected_line = '\Vfunction! ' . a:plugin_prefix . '#yggdrasil#tree#new(provider) abort'
+
+    Assert
+    \   filereadable(l:installed_file),
+    \   'File "' . l:installed_file . '" not installed'
+
+    let l:lines = readfile(l:installed_file)
+
+    Assert
+    \   len(filter(l:lines, {i, l -> l =~# l:expected_line})) > 0,
+    \   'Autoload prefix not set correctly in "' . l:installed_file . '"'
+  endfunction
+
+After:
+  unlet! plugin_root
+  unlet! plugin_prefix
+  delfunction Assert_installation
+
+Execute(Test install):
+  call mkdir(plugin_root, 'p')
+  let plugin_prefix = fnamemodify(plugin_root, ':t')
+
+  exec 'YggdrasilPlant ' . plugin_root
+
+  call Assert_installation(plugin_root, plugin_prefix)
+
+Execute(Test install with custom prefix):
+  call mkdir(plugin_root, 'p')
+  let plugin_prefix = 'myprefix'
+
+  exec 'YggdrasilPlant ' . plugin_root . ' ' . plugin_prefix
+
+  call Assert_installation(plugin_root, plugin_prefix)
+
+Execute(Test double loading):
+  unlet g:vim_yggdrasil_plugin_loaded
+  source plugin/yggdrasil.vim
+
+  AssertEqual 1, g:vim_yggdrasil_plugin_loaded
+
+  source plugin/yggdrasil.vim
+
+  AssertEqual 1, g:vim_yggdrasil_plugin_loaded
+
+Execute(Test exception on bad plugin root):
+  AssertThrows YggdrasilPlant test/output/myplugin
+  AssertEqual 'Yggdrasil: cannot read target plugin directory', g:vader_exception
