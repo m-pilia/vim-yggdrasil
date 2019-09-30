@@ -22,6 +22,7 @@ Before:
   let parent = 'parent'
 
 After:
+  set filetype=
   unlet! b:yggdrasil_tree
   unlet! b:script
 
@@ -37,6 +38,7 @@ After:
   unlet! Node_level
   unlet! Node_render
   unlet! Node_fetch_children
+  unlet! Tree_render
   unlet! exec_mock
   unlet! get_children_mock
   bwipeout!
@@ -77,10 +79,11 @@ Execute(Test s:node_render):
   \  'object': {},
   \  'tree': {
   \    'provider': provider,
+  \    'index': [],
   \  },
   \  'tree_item': {
-  \     'label': 'foobar',
-  \  }
+  \    'label': 'foobar',
+  \  },
   \ }
   let child = {
   \  'id': 1,
@@ -92,39 +95,40 @@ Execute(Test s:node_render):
   \  'object': {},
   \  'tree': {
   \    'provider': provider,
+  \    'index': [],
   \  },
   \  'tree_item': {
-  \     'label': 'child',
-  \  }
+  \    'label': "child\nmultiline",
+  \  },
   \ }
 
   let repr = node.render(0)
 
-  AssertEqual "  foobar [0]", repr
+  AssertEqual "• foobar", repr
   AssertEqual 0, get_children_mock.count
 
   let repr = node.render(1)
 
-  AssertEqual "    foobar [0]", repr
+  AssertEqual "  • foobar", repr
   AssertEqual 0, get_children_mock.count
 
   let node.lazy_open = 1
   let repr = node.render(1)
 
-  AssertEqual "  ▸ foobar [0]", repr
+  AssertEqual "  ▸ foobar", repr
   AssertEqual 0, get_children_mock.count
 
   let node.collapsed = 0
   let repr = node.render(1)
 
-  AssertEqual "  ▾ foobar [0]", repr
+  AssertEqual "  ▾ foobar", repr
   AssertEqual 1, get_children_mock.count
 
   let node.lazy_open = 0
   call add(node.children, child)
   let repr = node.render(1)
 
-  AssertEqual "  ▾ foobar [0]\n      child [1]", repr
+  AssertEqual "  ▾ foobar\n    • child\n      multiline", repr
   AssertEqual 1, get_children_mock.count
 
 Execute(Test s:node_level):
@@ -222,6 +226,27 @@ Execute(Test s:node_set_collapsed recursive):
 
   AssertEqual 1, root.collapsed
   AssertEqual 1, child.collapsed
+
+Execute(Test s:tree_render filetype guard):
+  let Tree_render = GetFunction(b:script, 'tree_render')
+  let node = {
+  \  'id': 0,
+  \  'children': [],
+  \  'collapsed': 0,
+  \  'lazy_open': 0,
+  \  'object': 0,
+  \  'tree': b:yggdrasil_tree,
+  \ }
+
+  let render_mock = GetFunctionMock()
+  let b:yggdrasil_tree.root.render = render_mock.function
+  set filetype=c
+
+  call Tree_render(b:yggdrasil_tree)
+
+  Assert
+  \   render_mock.count == 0,
+  \   'Rendering function called outside yggdrasil filetype'
 
 Execute(Test yggdrasil#tree#new):
   call yggdrasil#tree#new(provider)

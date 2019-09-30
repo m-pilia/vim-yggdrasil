@@ -83,13 +83,17 @@ endfunction
 " simplify the implementation and to avoid re-computing the depth.
 function! s:node_render(level) dict abort
     let l:indent = repeat(' ', 2 * a:level)
-    let l:mark = '  '
+    let l:mark = '• '
 
     if len(l:self.children) > 0 || l:self.lazy_open != v:false
         let l:mark = l:self.collapsed ? '▸ ' : '▾ '
     endif
 
-    let l:repr = l:indent . l:mark . l:self.tree_item.label . ' [' . l:self.id . ']'
+    let l:label = split(l:self.tree_item.label, "\n")
+    call extend(l:self.tree.index, map(range(len(l:label)), l:self.id))
+
+    let l:repr = l:indent . l:mark . l:label[0]
+    \          . join(map(l:label[1:], {_, l -> "\n" . l:indent . '  ' . l}))
 
     let l:lines = [l:repr]
     if !l:self.collapsed
@@ -142,11 +146,10 @@ function! s:tree_set_root_cb(tree, object, status, tree_item) abort
     endif
 endfunction
 
-" Return the id of the node currently under the cursor from the given {tree}.
-" The id is embedded in the view as a number within square brackets, hidden
-" with |conceal|.
-function! s:get_id_under_cursor(tree) abort
-    let l:id = str2nr(matchstr(getline('.'), '\v\[@<=\d+(\]$)@='))
+" Return the node currently under the cursor from the given {tree}.
+function! s:get_node_under_cursor(tree) abort
+    let l:index = min([line('.'), len(a:tree.index) - 1])
+    let l:id = a:tree.index[l:index]
     return a:tree.root.find(l:id)
 endfunction
 
@@ -154,25 +157,32 @@ endfunction
 " Please refer to *s:node_set_collapsed()* for details about the
 " arguments and behaviour.
 function! s:tree_set_collapsed_under_cursor(collapsed, recursive) dict abort
-    let l:node = s:get_id_under_cursor(l:self)
+    let l:node = s:get_node_under_cursor(l:self)
     call l:node.set_collapsed(a:collapsed, a:recursive)
     call s:tree_render(l:self)
 endfunction
 
 " Run the action associated to the node currently under the cursor.
 function! s:tree_exec_node_under_cursor() dict abort
-    call s:get_id_under_cursor(l:self).exec()
+    call s:get_node_under_cursor(l:self).exec()
 endfunction
 
 " Render the {tree}. This will replace the content of the buffer with the
-" tree view.
+" tree view. Clear the index, setting it to a list containing a guard
+" value for index 0 (line numbers are one-based).
 function! s:tree_render(tree) abort
+    if &filetype !=# 'yggdrasil'
+        return
+    endif
+
     let l:cursor = getpos('.')
+    let a:tree.index = [-1]
     let l:text = a:tree.root.render(0)
 
     setlocal modifiable
     silent 1,$delete _
     silent 0put=l:text
+    $d
     setlocal nomodifiable
 
     call setpos('.', l:cursor)
@@ -187,11 +197,13 @@ endfunction
 " Apply syntax to an Yggdrasil buffer
 function! s:filetype_syntax() abort
     syntax clear
-    syntax match YggdrasilId              "\v\[\d+\]$" conceal
+    syntax match YggdrasilMarkLeaf        "•" contained
     syntax match YggdrasilMarkCollapsed   "▸" contained
     syntax match YggdrasilMarkExpanded    "▾" contained
-    syntax match YggdrasilLabel           "\v^(\s|[▸▾])*.*( \[\d+\])@=" contains=YggdrasilMarkCollapsed,YggdrasilMarkExpanded
+    syntax match YggdrasilNode            "\v^(\s|[▸▾•])*.*"
+    \      contains=YggdrasilMarkLeaf,YggdrasilMarkCollapsed,YggdrasilMarkExpanded
 
+    highlight def link YggdrasilMarkLeaf        Type
     highlight def link YggdrasilMarkExpanded    Type
     highlight def link YggdrasilMarkCollapsed   Macro
 endfunction
@@ -200,8 +212,6 @@ endfunction
 function! s:filetype_settings() abort
     setlocal bufhidden=wipe
     setlocal buftype=nofile
-    setlocal concealcursor=nvic
-    setlocal conceallevel=3
     setlocal foldcolumn=0
     setlocal foldmethod=manual
     setlocal nobuflisted
@@ -247,12 +257,14 @@ endfunction
 " buffer-local variable called b:yggdrasil_tree.
 "
 " The {bufnr} stores the buffer number of the view, {maxid} is the highest
-" known internal identifier of the nodes.
+" known internal identifier of the nodes. The {index} is a list that
+" maps line numbers to node internal indices.
 function! yggdrasil#tree#new(provider) abort
     let b:yggdrasil_tree = {
     \ 'bufnr': bufnr('.'),
     \ 'maxid': -1,
     \ 'root': {},
+    \ 'index': [],
     \ 'provider': a:provider,
     \ 'set_collapsed_under_cursor': function('s:tree_set_collapsed_under_cursor'),
     \ 'exec_node_under_cursor': function('s:tree_exec_node_under_cursor'),
@@ -262,6 +274,7 @@ function! yggdrasil#tree#new(provider) abort
     augroup vim_yggdrasil
         autocmd!
         autocmd FileType yggdrasil call s:filetype_syntax() | call s:filetype_settings()
+        autocmd BufEnter <buffer> call s:tree_render(b:yggdrasil_tree)
     augroup END
 
     setlocal filetype=yggdrasil

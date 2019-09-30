@@ -16,10 +16,10 @@ Execute(test filetype_syntax):
 
   call Filetype_syntax()
 
-  syntax list YggdrasilId
+  syntax list YggdrasilMarkLeaf
   syntax list YggdrasilMarkCollapsed
   syntax list YggdrasilMarkExpanded
-  syntax list YggdrasilLabel
+  syntax list YggdrasilNode
 
 Execute(test filetype_settings):
   let Filetype_settings = GetFunction(b:script, 'filetype_settings')
@@ -28,8 +28,6 @@ Execute(test filetype_settings):
 
   AssertEqual 'wipe', &bufhidden
   AssertEqual 'nofile', &buftype
-  AssertEqual 'nvic', &concealcursor
-  AssertEqual 3, &conceallevel
   AssertEqual 0, &foldcolumn
   AssertEqual 'manual', &foldmethod
   AssertEqual 0, &buflisted
