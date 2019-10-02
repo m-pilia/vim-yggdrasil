@@ -1,18 +1,20 @@
 scriptencoding utf-8
 
 " Callback to retrieve the tree item representation of an object.
-function! s:node_get_tree_item_cb(node, object, status, tree_item) abort
+function! s:node_get_tree_item_cb(Callback, node, object, status, tree_item) abort
     if a:status ==? 'success'
         let l:new_node = s:node_new(a:node.tree, a:object, a:tree_item, a:node.id)
         call add(a:node.children, l:new_node)
+        call a:Callback(l:new_node)
         call s:tree_render(l:new_node.tree)
     endif
 endfunction
 
-" Callback to retrieve the children objects of a node.
-function! s:node_get_children_cb(node, status, childObjectList) abort
+" Callback to retrieve the children objects of a node, executing
+" {Callback} on each node.
+function! s:node_get_children_cb(Callback, node, status, childObjectList) abort
     for l:childObject in a:childObjectList
-        let l:Callback = function('s:node_get_tree_item_cb', [a:node, l:childObject])
+        let l:Callback = function('s:node_get_tree_item_cb', [a:Callback, a:node, l:childObject])
         call a:node.tree.provider.getTreeItem(l:Callback, l:childObject)
     endfor
 endfunction
@@ -27,18 +29,15 @@ endfunction
 " the nodes in the sub-tree rooted in this node. If it evaluates to false, only
 " this node is changed.
 function! s:node_set_collapsed(collapsed, recursive) dict abort
-    if a:collapsed < 1 && l:self.lazy_open != v:false
-        let l:Callback = function('s:node_get_children_cb', [l:self])
-        call l:self.tree.provider.getChildren(l:Callback, l:self.object)
-        let l:self.lazy_open = v:false
-        let l:self.collapsed = v:false
-    else
-        let l:self.collapsed = a:collapsed < 0 ? !l:self.collapsed : !!a:collapsed
-    endif
+    let l:self.collapsed = a:collapsed < 0 ? !l:self.collapsed : !!a:collapsed
     if a:recursive
-        for l:child in l:self.children
-            call l:child.set_collapsed(a:collapsed, a:recursive)
-        endfor
+        if l:self.lazy_open
+            call l:self.fetch_children({n -> n.set_collapsed(a:collapsed, a:recursive)})
+        else
+            for l:child in l:self.children
+                call l:child.set_collapsed(a:collapsed, a:recursive)
+            endfor
+        endif
     endif
 endfunction
 
@@ -70,6 +69,15 @@ function! s:node_level() dict abort
     return 1 + l:self.parent.level()
 endf
 
+" Fetch the children of a node
+function! s:node_fetch_children(Callback) dict abort
+    if l:self.lazy_open
+        let l:self.lazy_open = v:false
+        let l:Callback = function('s:node_get_children_cb', [a:Callback, l:self])
+        call l:self.tree.provider.getChildren(l:Callback, l:self.object)
+    endif
+endfunction
+
 " Return the string representation of the node. The {level} argument represents
 " the depth level of the node in the tree and it is passed for convenience, to
 " simplify the implementation and to avoid re-computing the depth.
@@ -85,8 +93,9 @@ function! s:node_render(level) dict abort
 
     let l:lines = [l:repr]
     if !l:self.collapsed
+        call l:self.fetch_children({n -> 0})
         for l:child in l:self.children
-            cal add(l:lines, l:child.render(a:level + 1))
+            call add(l:lines, l:child.render(a:level + 1))
         endfor
     endif
 
@@ -116,6 +125,7 @@ function! s:node_new(tree, object, tree_item, parent) abort
     \ 'find': function('s:node_find'),
     \ 'exec': has_key(a:tree_item, 'command') ? a:tree_item.command : {-> 0},
     \ 'set_collapsed': function('s:node_set_collapsed'),
+    \ 'fetch_children': function('s:node_fetch_children'),
     \ 'render': function('s:node_render'),
     \ }
 endfunction
