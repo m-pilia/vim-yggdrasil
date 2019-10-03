@@ -43,31 +43,21 @@ Execute(test filetype_settings):
   AssertMapping
   \   'nmap',
   \   '<Plug>(yggdrasil-toggle-node)',
-  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(-1, v:false)<CR>'
+  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(-1)<CR>'
   AssertMapping
   \   'nmap',
   \   '<Plug>(yggdrasil-open-node)',
-  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(v:false, v:false)<CR>'
+  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(v:false)<CR>'
   AssertMapping
   \   'nmap',
   \   '<Plug>(yggdrasil-close-node)',
-  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(v:true, v:false)<CR>'
-  AssertMapping
-  \   'nmap',
-  \   '<Plug>(yggdrasil-open-subtree)',
-  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(v:false, v:true)<CR>'
-  AssertMapping
-  \   'nmap',
-  \   '<Plug>(yggdrasil-close-subtree)',
-  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(v:true, v:true)<CR>'
+  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(v:true)<CR>'
   AssertMapping
   \   'nmap',
   \   '<Plug>(yggdrasil-execute-node)',
   \   ':call b:yggdrasil_tree.exec_node_under_cursor()<CR>'
 
   AssertMapping 'nmap', 'o', '<Plug>(yggdrasil-toggle-node)'
-  AssertMapping 'nmap', 'O', '<Plug>(yggdrasil-open-subtree)'
-  AssertMapping 'nmap', 'C', '<Plug>(yggdrasil-close-subtree)'
   AssertMapping 'nmap', '<CR>', '<Plug>(yggdrasil-execute-node)'
   AssertMapping 'nmap', 'q', ':q<CR>'
 
@@ -78,7 +68,5 @@ Execute(test filetype_settings with g:yggdrasil_no_default_maps):
   call Filetype_settings()
 
   AssertNoMapping 'nmap', 'o'
-  AssertNoMapping 'nmap', 'O'
-  AssertNoMapping 'nmap', 'C'
   AssertNoMapping 'nmap', '<CR>'
   AssertNoMapping 'nmap', 'q'
