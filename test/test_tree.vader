@@ -22,6 +22,7 @@ Before:
   let parent = 'parent'
 
 After:
+  set filetype=
   unlet! b:yggdrasil_tree
   unlet! b:script
 
@@ -36,7 +37,7 @@ After:
   unlet! Node_find
   unlet! Node_level
   unlet! Node_render
-  unlet! Node_fetch_children
+  unlet! Tree_render
   unlet! exec_mock
   unlet! get_children_mock
   bwipeout!
@@ -62,7 +63,6 @@ Execute(Test s:node_new):
 
 Execute(Test s:node_render):
   let Node_render = GetFunction(b:script, 'node_render')
-  let Node_fetch_children = GetFunction(b:script, 'node_fetch_children')
   let get_children_mock = GetFunctionMock()
 
   let provider.getChildren = get_children_mock.function
@@ -73,14 +73,14 @@ Execute(Test s:node_render):
   \  'children': [],
   \  'lazy_open': 0,
   \  'render': Node_render,
-  \  'fetch_children': Node_fetch_children,
   \  'object': {},
   \  'tree': {
   \    'provider': provider,
+  \    'index': [],
   \  },
   \  'tree_item': {
-  \     'label': 'foobar',
-  \  }
+  \    'label': 'foobar',
+  \  },
   \ }
   let child = {
   \  'id': 1,
@@ -88,43 +88,43 @@ Execute(Test s:node_render):
   \  'children': [],
   \  'lazy_open': 0,
   \  'render': Node_render,
-  \  'fetch_children': Node_fetch_children,
   \  'object': {},
   \  'tree': {
   \    'provider': provider,
+  \    'index': [],
   \  },
   \  'tree_item': {
-  \     'label': 'child',
-  \  }
+  \    'label': "child\nmultiline",
+  \  },
   \ }
 
   let repr = node.render(0)
 
-  AssertEqual "  foobar [0]", repr
+  AssertEqual "• foobar", repr
   AssertEqual 0, get_children_mock.count
 
   let repr = node.render(1)
 
-  AssertEqual "    foobar [0]", repr
+  AssertEqual "  • foobar", repr
   AssertEqual 0, get_children_mock.count
 
   let node.lazy_open = 1
   let repr = node.render(1)
 
-  AssertEqual "  ▸ foobar [0]", repr
+  AssertEqual "  ▸ foobar", repr
   AssertEqual 0, get_children_mock.count
 
   let node.collapsed = 0
   let repr = node.render(1)
 
-  AssertEqual "  ▾ foobar [0]", repr
+  AssertEqual "  ▾ foobar", repr
   AssertEqual 1, get_children_mock.count
 
   let node.lazy_open = 0
   call add(node.children, child)
   let repr = node.render(1)
 
-  AssertEqual "  ▾ foobar [0]\n      child [1]", repr
+  AssertEqual "  ▾ foobar\n    • child\n      multiline", repr
   AssertEqual 1, get_children_mock.count
 
 Execute(Test s:node_level):
@@ -172,56 +172,42 @@ Execute(Test s:node_set_collapsed):
   \  'set_collapsed': Node_set_collapsed,
   \ }
 
-  call node.set_collapsed(0, 0)
+  call node.set_collapsed(0)
 
   AssertEqual 0, node.collapsed
 
-  call node.set_collapsed(1, 0)
+  call node.set_collapsed(1)
 
   AssertEqual 1, node.collapsed
 
-  call node.set_collapsed(-1, 0)
+  call node.set_collapsed(-1)
 
   AssertEqual 0, node.collapsed
 
-  call node.set_collapsed(-1, 0)
+  call node.set_collapsed(-1)
 
   AssertEqual 1, node.collapsed
 
-Execute(Test s:node_set_collapsed recursive):
-  let Node_set_collapsed = GetFunction(b:script, 'node_set_collapsed')
-  let child = {
-  \  'collapsed': 0,
-  \  'lazy_open': 0,
-  \  'set_collapsed': Node_set_collapsed,
+Execute(Test s:tree_render filetype guard):
+  let Tree_render = GetFunction(b:script, 'tree_render')
+  let node = {
+  \  'id': 0,
   \  'children': [],
-  \ }
-  let root = {
   \  'collapsed': 0,
   \  'lazy_open': 0,
-  \  'set_collapsed': Node_set_collapsed,
-  \  'children': [child],
+  \  'object': 0,
+  \  'tree': b:yggdrasil_tree,
   \ }
 
-  call root.set_collapsed(0, 1)
+  let render_mock = GetFunctionMock()
+  let b:yggdrasil_tree.root.render = render_mock.function
+  set filetype=c
 
-  AssertEqual 0, root.collapsed
-  AssertEqual 0, child.collapsed
+  call Tree_render(b:yggdrasil_tree)
 
-  call root.set_collapsed(1, 1)
-
-  AssertEqual 1, root.collapsed
-  AssertEqual 1, child.collapsed
-
-  call root.set_collapsed(-1, 1)
-
-  AssertEqual 0, root.collapsed
-  AssertEqual 0, child.collapsed
-
-  call root.set_collapsed(-1, 1)
-
-  AssertEqual 1, root.collapsed
-  AssertEqual 1, child.collapsed
+  Assert
+  \   render_mock.count == 0,
+  \   'Rendering function called outside yggdrasil filetype'
 
 Execute(Test yggdrasil#tree#new):
   call yggdrasil#tree#new(provider)
@@ -244,7 +230,7 @@ Execute(Test s:tree_set_collapsed_under_cursor expand):
   AssertEqual 1, b:yggdrasil_tree.root.lazy_open
 
   call cursor(1, 1)
-  call b:yggdrasil_tree.set_collapsed_under_cursor(0, 0)
+  call b:yggdrasil_tree.set_collapsed_under_cursor(0)
 
   AssertEqual 0, b:yggdrasil_tree.root.collapsed
   AssertEqual 0, b:yggdrasil_tree.root.lazy_open
@@ -253,7 +239,7 @@ Execute(Test s:tree_set_collapsed_under_cursor expand):
   AssertEqual 'Label of node 2', b:yggdrasil_tree.root.children[1].tree_item.label
 
   call cursor(3, 1)
-  call b:yggdrasil_tree.set_collapsed_under_cursor(0, 0)
+  call b:yggdrasil_tree.set_collapsed_under_cursor(0)
 
   let node = b:yggdrasil_tree.root.children[1]
 
@@ -265,12 +251,12 @@ Execute(Test s:tree_set_collapsed_under_cursor collapse):
   call yggdrasil#tree#new(provider)
 
   call cursor(1, 1)
-  call b:yggdrasil_tree.set_collapsed_under_cursor(0, 0)
+  call b:yggdrasil_tree.set_collapsed_under_cursor(0)
 
   AssertEqual 0, b:yggdrasil_tree.root.collapsed
   AssertEqual 0, b:yggdrasil_tree.root.lazy_open
 
-  call b:yggdrasil_tree.set_collapsed_under_cursor(1, 0)
+  call b:yggdrasil_tree.set_collapsed_under_cursor(1)
 
   AssertEqual 1, b:yggdrasil_tree.root.collapsed
   AssertEqual 0, b:yggdrasil_tree.root.lazy_open
@@ -279,43 +265,15 @@ Execute(Test s:tree_set_collapsed_under_cursor flip):
   call yggdrasil#tree#new(provider)
 
   call cursor(1, 1)
-  call b:yggdrasil_tree.set_collapsed_under_cursor(-1, 0)
+  call b:yggdrasil_tree.set_collapsed_under_cursor(-1)
 
   AssertEqual 0, b:yggdrasil_tree.root.collapsed
   AssertEqual 0, b:yggdrasil_tree.root.lazy_open
 
-  call b:yggdrasil_tree.set_collapsed_under_cursor(-1, 0)
+  call b:yggdrasil_tree.set_collapsed_under_cursor(-1)
 
   AssertEqual 1, b:yggdrasil_tree.root.collapsed
   AssertEqual 0, b:yggdrasil_tree.root.lazy_open
-
-Execute(Test s:tree_set_collapsed_under_cursor recursive):
-  call yggdrasil#tree#new(provider)
-
-  call cursor(1, 1)
-  call b:yggdrasil_tree.set_collapsed_under_cursor(0, 1)
-
-  let root = b:yggdrasil_tree.root
-
-  AssertEqual 'Label of node 1', root.children[0].tree_item.label
-  AssertEqual 'Label of node 2', root.children[1].tree_item.label
-  AssertEqual 'Label of node 3', root.children[0].children[0].tree_item.label
-  AssertEqual 'Label of node 4', root.children[1].children[0].tree_item.label
-  AssertEqual 'Label of node 5', root.children[1].children[1].tree_item.label
-
-  AssertEqual 0, root.children[0].collapsed
-  AssertEqual 0, root.children[1].collapsed
-  AssertEqual 0, root.children[0].children[0].collapsed
-  AssertEqual 0, root.children[1].children[0].collapsed
-  AssertEqual 0, root.children[1].children[1].collapsed
-
-  call b:yggdrasil_tree.set_collapsed_under_cursor(1, 1)
-
-  AssertEqual 1, root.children[0].collapsed
-  AssertEqual 1, root.children[1].collapsed
-  AssertEqual 1, root.children[0].children[0].collapsed
-  AssertEqual 1, root.children[1].children[0].collapsed
-  AssertEqual 1, root.children[1].children[1].collapsed
 
 Execute(Test s:tree_exec_node_under_cursor):
   call yggdrasil#tree#new(provider)
@@ -325,7 +283,7 @@ Execute(Test s:tree_exec_node_under_cursor):
 
   AssertMessage 'Calling object 0!'
 
-  call b:yggdrasil_tree.set_collapsed_under_cursor(0, 0)
+  call b:yggdrasil_tree.set_collapsed_under_cursor(0)
   call cursor(2, 1)
 
   call b:yggdrasil_tree.exec_node_under_cursor()

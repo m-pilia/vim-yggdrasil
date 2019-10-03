@@ -81,11 +81,9 @@ yggdrasil#tree#new({provider})                            *yggdrasil#tree#new*
 
     The tree object has some member functions that allow to interact with it:
 
-     * set_collapsed_under_cursor({collapsed}, {recursive})
+     * set_collapsed_under_cursor({collapsed})
        If {collapsed} is 1, collapse the node currently under cursor, if it is
-       0 expand it, if it is -1 toggle its collapsing state. If {recursive} is
-       true, the change is propagated recursively to the whole subtree rooted
-       in the node under the cursor.
+       0 expand it, if it is -1 toggle its collapsing state.
 
      * exec_node_under_cursor()
        Trigger the action associated to the execution of the node currently
@@ -211,15 +209,11 @@ under the cursor in a Yggdrasil buffer are:
     <Plug>(yggdrasil-toggle-node)
     <Plug>(yggdrasil-open-node)
     <Plug>(yggdrasil-close-node)
-    <Plug>(yggdrasil-open-subtree)
-    <Plug>(yggdrasil-close-subtree)
     <Plug>(yggdrasil-execute-node)
 
 The following key bindings are provided out-of-the-box:
 >
     nmap <silent> <buffer> o    <Plug>(yggdrasil-toggle-node)
-    nmap <silent> <buffer> O    <Plug>(yggdrasil-open-subtree)
-    nmap <silent> <buffer> C    <Plug>(yggdrasil-close-subtree)
     nmap <silent> <buffer> <cr> <Plug>(yggdrasil-execute-node)
     nnoremap <silent> <buffer> q :q<cr>
 <
