@@ -15,6 +15,38 @@ Among the features:
 * A callback mechanism allows asynchronous execution. The data provider can
   generate data asynchronously, and send it to the view through a callback.
 * Pure VimScript implementation, self-contained library.
+* Easy to embed in other plugins without external dependencies.
+
+Install
+=======
+
+Yggdrasil can be either installed as an external dependency (as a regular vim
+plugin) or it can be embedded within another plugin's file structure. The
+latter solution allows to have an own copy of Yggdrasil, avoiding to rely on an
+external dependency with its potential issues.
+
+To embed Yggdrasil in your plugin, run the `YggdrasilPlant` command, specifying
+the root directory of your vim plugin, and optionally a name to be used as a
+namespace (by default, the name of the root directory). For instance, if your
+plugin's root folder (containing the `autoload`, `plugin`, `doc` folders etc.)
+is `/foo/myplugin`, by calling:
+```
+:YggdrasilPlant /foo/myplugin
+```
+a copy of Yggdrasil will be installed in
+`/foo/myplugin/autoload/myplugin/yggdrasil`, and it can be used as
+```viml
+" Call an Yggdrasil function in your plugin code
+call myplugin#yggdrasil#tree#new(provider)
+```
+
+If for some reason you want to use a different namespace than the name of the
+root folder of your plugin, pass an optional argument to specify it. For
+instance, a call to
+```
+:YggdrasilPlant /foo/myplugin bar
+```
+will install a copy of Yggdrasil in `/foo/myplugin/autoload/bar/yggdrasil`.
 
 Example
 =======
