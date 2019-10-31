@@ -1,0 +1,72 @@
+Before:
+  new
+  source test/utils.vim
+
+  let b:script = 'autoload/yggdrasil/tree.vim'
+
+After:
+  unlet! g:yggdrasil_no_default_maps
+  unlet! b:script
+  unlet! Filetype_syntax
+  unlet! Filetype_settings
+  bwipeout!
+
+Execute(test filetype_syntax):
+  let Filetype_syntax = GetFunction(b:script, 'filetype_syntax')
+
+  call Filetype_syntax()
+
+  syntax list YggdrasilMarkLeaf
+  syntax list YggdrasilMarkCollapsed
+  syntax list YggdrasilMarkExpanded
+  syntax list YggdrasilNode
+
+Execute(test filetype_settings):
+  let Filetype_settings = GetFunction(b:script, 'filetype_settings')
+
+  call Filetype_settings()
+
+  AssertEqual 'wipe', &bufhidden
+  AssertEqual 'nofile', &buftype
+  AssertEqual 0, &foldcolumn
+  AssertEqual 'manual', &foldmethod
+  AssertEqual 0, &buflisted
+  AssertEqual 0, &foldenable
+  AssertEqual 0, &hlsearch
+  AssertEqual 0, &list
+  AssertEqual 0, &modifiable
+  AssertEqual 0, &number
+  AssertEqual 0, &spell
+  AssertEqual 0, &swapfile
+  AssertEqual 0, &wrap
+
+  AssertMapping
+  \   'nmap',
+  \   '<Plug>(yggdrasil-toggle-node)',
+  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(-1)<CR>'
+  AssertMapping
+  \   'nmap',
+  \   '<Plug>(yggdrasil-open-node)',
+  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(v:false)<CR>'
+  AssertMapping
+  \   'nmap',
+  \   '<Plug>(yggdrasil-close-node)',
+  \   ':call b:yggdrasil_tree.set_collapsed_under_cursor(v:true)<CR>'
+  AssertMapping
+  \   'nmap',
+  \   '<Plug>(yggdrasil-execute-node)',
+  \   ':call b:yggdrasil_tree.exec_node_under_cursor()<CR>'
+
+  AssertMapping 'nmap', 'o', '<Plug>(yggdrasil-toggle-node)'
+  AssertMapping 'nmap', '<CR>', '<Plug>(yggdrasil-execute-node)'
+  AssertMapping 'nmap', 'q', ':q<CR>'
+
+Execute(test filetype_settings with g:yggdrasil_no_default_maps):
+  let Filetype_settings = GetFunction(b:script, 'filetype_settings')
+
+  let g:yggdrasil_no_default_maps = 1
+  call Filetype_settings()
+
+  AssertNoMapping 'nmap', 'o'
+  AssertNoMapping 'nmap', '<CR>'
+  AssertNoMapping 'nmap', 'q'
