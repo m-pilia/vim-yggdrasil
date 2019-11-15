@@ -1,11 +1,17 @@
-vim-yggdrasil: general purpose tree viewer for vim
+vim-yggdrasil: general purpose tree viewer for vim/neovim
 ===============================================================
 [![Travis CI Build Status](https://travis-ci.org/m-pilia/vim-yggdrasil.svg?branch=master)](https://travis-ci.org/m-pilia/vim-yggdrasil)
 [![codecov](https://codecov.io/gh/m-pilia/vim-yggdrasil/branch/master/graph/badge.svg)](https://codecov.io/gh/m-pilia/vim-yggdrasil/branch/master)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/m-pilia/vim-yggdrasil/blob/master/LICENSE)
 
-This plugin implements a general purpose tree viewer library for vim. It uses
-an interface similar to VSCode's
+<p align="center">
+<img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Pasaules_koks_Igdrasils.jpg" />
+<br />
+(Image: <a href="https://commons.wikimedia.org/wiki/File:Pasaules_koks_Igdrasils.jpg">WikiMedia Commons</a>)
+</p>
+
+This plugin implements a general purpose tree viewer library for vim/neovim. It
+uses an interface similar to VSCode's
 [TreeDataProvider](https://code.visualstudio.com/api/references/vscode-api#TreeDataProvider)
 to retrieve the data to be displayed by the view.
 
@@ -16,6 +22,12 @@ Among the features:
   generate data asynchronously, and send it to the view through a callback.
 * Pure VimScript implementation, self-contained library.
 * Easy to embed in other plugins without external dependencies.
+
+For a concrete example of usage, you can check the source of
+[vim-ccls](https://github.com/m-pilia/vim-ccls), that makes use of
+Yggdrasil to show symbol hierarchies.
+
+![Example](https://user-images.githubusercontent.com/8300317/68967865-d923d500-07e9-11ea-8312-5e4636c2b7b7.png)
 
 Install
 =======
@@ -98,7 +110,7 @@ endfunction
 "  * label: string representing the node in the view
 function! s:number_to_treeitem(id) abort
     return {
-    \   'id': num2str(a:id),
+    \   'id': string(a:id),
     \   'command': function('s:command_callback', [a:id]),
     \   'collapsibleState': len(s:tree[a:id]) > 0 ? 'collapsed' : 'none',
     \   'label': 'Label of node ' . a:id,
@@ -148,6 +160,10 @@ let s:provider = {
 " Create a tree view with the given provider
 call yggdrasil#tree#new(s:provider)
 ```
+
+For a more extensive example of usage, you can check the implementation of
+[vim-ccls](https://github.com/m-pilia/vim-ccls), that makes use of
+Yggdrasil to display symbol hierarchy trees.
 
 Settings
 ========
