@@ -8,8 +8,8 @@ let s:tree = {
 \     6: [],
 \ }
 
-function! s:get_parent(id) abort
-    for [l:parent, l:children] in items(s:tree)
+function! s:get_parent(tree, id) abort
+    for [l:parent, l:children] in items(a:tree)
         if index(l:children, a:id) > 0
             return l:parent
         endif
@@ -20,20 +20,20 @@ function! s:command_callback(id) abort
     echom 'Calling object ' . a:id . '!'
 endfunction
 
-function! s:number_to_treeitem(id) abort
+function! s:number_to_treeitem(tree, id) abort
     return {
     \   'id': string(a:id),
     \   'command': function('s:command_callback', [a:id]),
-    \   'collapsibleState': len(s:tree[a:id]) > 0 ? 'collapsed' : 'none',
+    \   'collapsibleState': len(a:tree[a:id]) > 0 ? 'collapsed' : 'none',
     \   'label': 'Label of node ' . a:id,
     \ }
 endfunction
 
-function! s:children(Callback, ...) abort
-    let l:children = [0]
+function! s:children(tree, root, Callback, ...) abort
+    let l:children = a:root
     if a:0 > 0
-        if has_key(s:tree, a:1)
-            let l:children = s:tree[a:1]
+        if has_key(a:tree, a:1)
+            let l:children = a:tree[a:1]
         else
             call a:Callback('failure')
         endif
@@ -41,12 +41,14 @@ function! s:children(Callback, ...) abort
     call a:Callback('success', l:children)
 endfunction
 
-let s:provider = {
-\ 'getChildren': function('s:children'),
-\ 'getParent': {callback, x -> callback('success', s:get_parent(x))},
-\ 'getTreeItem': {callback, x -> callback('success', s:number_to_treeitem(x))},
-\ }
-
 function! GetProvider() abort
-    return s:provider
+    let l:tree = deepcopy(s:tree)
+    let l:root = [0]
+    return {
+    \   'tree': l:tree,
+    \   'root': l:root,
+    \   'getChildren': function('s:children', [l:tree, l:root]),
+    \   'getParent': {callback, x -> callback('success', s:get_parent(l:tree, x))},
+    \   'getTreeItem': {callback, x -> callback('success', s:number_to_treeitem(l:tree, x))},
+    \ }
 endfunction

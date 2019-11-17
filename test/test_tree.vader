@@ -32,12 +32,14 @@ After:
   unlet! tree_item
   unlet! repr
   unlet! root
+  unlet! i
   unlet! Node_new
   unlet! Node_set_collapsed
-  unlet! Node_find
+  unlet! Search_subtree
   unlet! Node_level
   unlet! Node_render
   unlet! Tree_render
+  unlet! Node_update
   unlet! exec_mock
   unlet! get_children_mock
   bwipeout!
@@ -56,7 +58,6 @@ Execute(Test s:node_new):
   AssertEqual 1, node.lazy_open
   AssertEqual [], node.children
   AssertEqual type({->0}), type(node.level)
-  AssertEqual type({->0}), type(node.find)
   AssertEqual type({->0}), type(node.exec)
   AssertEqual type({->0}), type(node.set_collapsed)
   AssertEqual type({->0}), type(node.render)
@@ -147,22 +148,23 @@ Execute(Test exec):
 
   AssertEqual 1, exec_mock.count
 
-Execute(Test s:node_find):
-  let Node_find = GetFunction(b:script, 'node_find')
-  let grandsibling = {'id': 6, 'children': [], 'find': Node_find}
-  let grandchild = {'id': 5, 'children': [], 'find': Node_find}
-  let cousin = {'id': 4, 'children': [], 'find': Node_find}
-  let sibling = {'id': 3, 'children': [grandchild, grandsibling], 'find': Node_find}
-  let child = {'id': 2, 'children': [cousin], 'find': Node_find}
-  let root = {'id': 1, 'children': [child, sibling], 'find': Node_find}
+Execute(Test s:search_subtree):
+  let Search_subtree = GetFunction(b:script, 'search_subtree')
+  let grandsibling_2 = {'key': 6, 'children': []}
+  let grandsibling_1 = {'key': 6, 'children': []}
+  let grandchild = {'key': 5, 'children': []}
+  let cousin = {'key': 4, 'children': []}
+  let sibling = {'key': 3, 'children': [grandchild, grandsibling_1, grandsibling_2]}
+  let child = {'key': 2, 'children': [cousin]}
+  let root = {'key': 1, 'children': [child, sibling]}
 
-  AssertEqual v:null, root.find(0)
-  AssertEqual root, root.find(1)
-  AssertEqual child, root.find(2)
-  AssertEqual sibling, root.find(3)
-  AssertEqual cousin, root.find(4)
-  AssertEqual grandchild, root.find(5)
-  AssertEqual grandsibling, root.find(6)
+  AssertEqual [], Search_subtree(root, {n -> n.key == 0})
+  AssertEqual [root], Search_subtree(root, {n -> n.key == 1})
+  AssertEqual [child], Search_subtree(root, {n -> n.key == 2})
+  AssertEqual [sibling], Search_subtree(root, {n -> n.key == 3})
+  AssertEqual [cousin], Search_subtree(root, {n -> n.key == 4})
+  AssertEqual [grandchild], Search_subtree(root, {n -> n.key == 5})
+  AssertEqual [grandsibling_1, grandsibling_2], Search_subtree(root, {n -> n.key == 6})
 
 Execute(Test s:node_set_collapsed):
   let Node_set_collapsed = GetFunction(b:script, 'node_set_collapsed')
@@ -289,3 +291,46 @@ Execute(Test s:tree_exec_node_under_cursor):
   call b:yggdrasil_tree.exec_node_under_cursor()
 
   AssertMessage 'Calling object 1!'
+
+Execute(Test s:node_update with unsuccessful status):
+  let Node_update = GetFunction(b:script, 'node_update')
+
+  call yggdrasil#tree#new(provider)
+
+  AssertEqual 0, b:yggdrasil_tree.root.object
+
+  let tree_item = {'id': 1, 'collapsibleState': 'none', 'label': '1'}
+  call Node_update(b:yggdrasil_tree, 0, 'failure', tree_item)
+
+  AssertEqual 0, b:yggdrasil_tree.root.tree_item.id
+
+Execute(Test s:tree_update without argument):
+  call yggdrasil#tree#new(provider)
+
+  AssertEqual 0, b:yggdrasil_tree.root.object
+
+  let provider.root[0] = 1
+
+  call b:yggdrasil_tree.update()
+
+  AssertEqual 1, b:yggdrasil_tree.root.object
+
+Execute(Test s:tree_update with argument):
+  call yggdrasil#tree#new(provider)
+
+  " Expand all nodes
+  let i = 1
+  while i <= line('$')
+    call cursor(i, 1)
+    call b:yggdrasil_tree.set_collapsed_under_cursor(0)
+    let i += 1
+  endwhile
+
+  AssertEqual 4, b:yggdrasil_tree.root.children[1].children[0].object
+
+  " Alter the representation from the provider
+  let provider.tree[2] = [6, 5]
+
+  call b:yggdrasil_tree.update(2)
+
+  AssertEqual 6, b:yggdrasil_tree.root.children[1].children[0].object

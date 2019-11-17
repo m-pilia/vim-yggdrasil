@@ -89,9 +89,12 @@ yggdrasil#tree#new({provider})                            *yggdrasil#tree#new*
        Trigger the action associated to the execution of the node currently
        under the cursor.
 
-     * update()
+     * update([{object}])
        Update the tree, used e.g. to notify the view that the structure of the
-       tree or the content of some nodes has changed.
+       tree or the content of some nodes has changed. When called with no
+       argument, the whole tree is updated (allowing for instance to change
+       the root of the tree). Otherwise, all the subtrees with root in a node
+       representing {object} will be updated.
 
     Other members of the tree object are implementation specific and not part
     of the public API.
