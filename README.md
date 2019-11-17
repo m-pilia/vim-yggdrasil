@@ -161,6 +161,22 @@ let s:provider = {
 call yggdrasil#tree#new(s:provider)
 ```
 
+To notify the view of a change in the structure or representation of the tree
+nodes, because of a change inside the provider, the `update()` method can be
+used:
+```viml
+" Update the whole tree. Allows, for instance, to change the root.
+" The whole tree is collapsed, and all nodes will be queried again from the
+" provider when the user expands them again.
+call b:yggdrasil_tree.update()
+
+" Update only the node representing the integer number "2" in the above
+" example, and its subtree. Preserve the collapsing structure of the view.
+" Only the node representing "2" and its subtree will be queried again from
+" the provider.
+call b:yggdrasil_tree.update(2)
+```
+
 For a more extensive example of usage, you can check the implementation of
 [vim-ccls](https://github.com/m-pilia/vim-ccls), that makes use of
 Yggdrasil to display symbol hierarchy trees.
