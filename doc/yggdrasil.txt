@@ -98,10 +98,11 @@ yggdrasil#tree#new({provider})                            *yggdrasil#tree#new*
        the root of the tree). Otherwise, all the subtrees with root in a node
        representing {object} will be updated.
 
+     * wipe()
+       Destroy the tree view and |:bwipeout| the buffer containing it.
+
     Other members of the tree object are implementation specific and not part
     of the public API.
-
-    Do destroy the tree view, wipe out the buffer containing it with |bwipeout|.
 
     Example:
 >

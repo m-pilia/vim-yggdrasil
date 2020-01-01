@@ -1,0 +1,27 @@
+Before:
+  source test/utils.vim
+  source test/mock/provider.vim
+
+  let provider = GetProvider()
+  let buffer_number = bufnr('%')
+  let window_number = winnr()
+
+After:
+  unlet! provider
+  unlet! buffer_number
+  unlet! window_number
+
+Given(Buffer with some content):
+  Some text.
+  This is an example.
+Execute(Test s:tree_wipe):
+  vnew
+  call yggdrasil#tree#new(provider)
+
+  call b:yggdrasil_tree.wipe()
+
+  AssertEqual buffer_number, bufnr('%')
+  AssertEqual window_number, winnr()
+Expect(Original buffer content is unchanged):
+  Some text.
+  This is an example.

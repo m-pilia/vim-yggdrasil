@@ -68,6 +68,9 @@ synchronous execution, but the methods of the data provider could be
 asynchronous (e.g. launching an external job), using the provided callback
 mechanism.
 
+After installing Yggdrasil, you can run this example by pasting the following
+script in a new file, open it within vim and executing `:source %`.
+
 ```viml
 " Minimal example of tree data. The objects are integer numbers.
 " Here the tree structure is implemented with a dictionary mapping parents to
@@ -157,6 +160,23 @@ let s:provider = {
 \ 'getTreeItem': function('s:GetTreeItem'),
 \ }
 
+" Create a new buffer and a new window for the tree view
+if exists('*nvim_open_win')
+    let s:buffer_options = {
+    \ 'anchor': 'NW',
+    \ 'style': 'minimal',
+    \ 'relative': 'cursor',
+    \ 'width': 50,
+    \ 'height': 10,
+    \ 'row': 1,
+    \ 'col': 0,
+    \ }
+    call win_gotoid(nvim_open_win(nvim_create_buf(v:false, v:true), 0, s:buffer_options))
+else
+    topleft vnew
+endif
+
+
 " Create a tree view with the given provider
 "
 " This function turns the current buffer into a tree view using data from the
@@ -182,9 +202,12 @@ call b:yggdrasil_tree.update()
 call b:yggdrasil_tree.update(2)
 ```
 
-All the data of the tree view is local to the buffer containing it. To destroy
-the tree view, simply wipe out its buffer with
-[`:bwipeout`](http://vimdoc.sourceforge.net/htmldoc/windows.html#:bwipeout).
+To destroy the tree view, call the `wipe()` method. This will
+[`wipe out`](http://vimdoc.sourceforge.net/htmldoc/windows.html#:bwipeout) the
+buffer containing the tree:
+```viml
+call b:yggdrasil_tree.wipe()
+```
 
 For a more extensive example of usage, you can check the implementation of
 [vim-ccls](https://github.com/m-pilia/vim-ccls), that makes use of
@@ -201,15 +224,14 @@ The following `<Plug>` mappings are available to interact with a tree buffer:
 <Plug>(yggdrasil-open-subtree)
 <Plug>(yggdrasil-close-subtree)
 <Plug>(yggdrasil-execute-node)
+<Plug>(yggdrasil-wipe-tree)
 ```
 
 The default key bindings are:
 ```vim
 nmap <silent> <buffer> o    <Plug>(yggdrasil-toggle-node)
-nmap <silent> <buffer> O    <Plug>(yggdrasil-open-subtree)
-nmap <silent> <buffer> C    <Plug>(yggdrasil-close-subtree)
 nmap <silent> <buffer> <cr> <Plug>(yggdrasil-execute-node)
-nnoremap <silent> <buffer> q :q<cr>
+nmap <silent> <buffer> q    <Plug>(yggdrasil-wipe-tree)
 ```
 
 They can be disabled and replaced with custom mappings:
