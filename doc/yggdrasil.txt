@@ -46,7 +46,9 @@ yggdrasil#tree#new({provider})                            *yggdrasil#tree#new*
 
     Turns the current buffer into an Yggdrasil tree view. Tree data is
     retrieved from the given {provider} object. The state of the tree is
-    stored in a buffer-local variable called b:yggdrasil_tree.
+    stored in a buffer-local variable called b:yggdrasil_tree. Any
+    pre-existing content of the current buffer will be deleted without
+    warning.
 
     The {provider} object is a dictionary exposing three member functions:
 
@@ -98,6 +100,8 @@ yggdrasil#tree#new({provider})                            *yggdrasil#tree#new*
 
     Other members of the tree object are implementation specific and not part
     of the public API.
+
+    Do destroy the tree view, wipe out the buffer containing it with |bwipeout|.
 
     Example:
 >

@@ -158,6 +158,11 @@ let s:provider = {
 \ }
 
 " Create a tree view with the given provider
+"
+" This function turns the current buffer into a tree view using data from the
+" given provider. Any pre-existing content of the buffer will be deleted
+" without warning. It is recommended to call this function within a newly
+" created buffer (usually in a new split window, floating window, or tab).
 call yggdrasil#tree#new(s:provider)
 ```
 
@@ -176,6 +181,10 @@ call b:yggdrasil_tree.update()
 " the provider.
 call b:yggdrasil_tree.update(2)
 ```
+
+All the data of the tree view is local to the buffer containing it. To destroy
+the tree view, simply wipe out its buffer with
+[`:bwipeout`](http://vimdoc.sourceforge.net/htmldoc/windows.html#:bwipeout).
 
 For a more extensive example of usage, you can check the implementation of
 [vim-ccls](https://github.com/m-pilia/vim-ccls), that makes use of
