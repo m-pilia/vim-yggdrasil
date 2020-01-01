@@ -59,7 +59,7 @@ Execute(test filetype_settings):
 
   AssertMapping 'nmap', 'o', '<Plug>(yggdrasil-toggle-node)'
   AssertMapping 'nmap', '<CR>', '<Plug>(yggdrasil-execute-node)'
-  AssertMapping 'nmap', 'q', ':q<CR>'
+  AssertMapping 'nmap', 'q', '<Plug>(yggdrasil-wipe-tree)'
 
 Execute(test filetype_settings with g:yggdrasil_no_default_maps):
   let Filetype_settings = GetFunction(b:script, 'filetype_settings')
