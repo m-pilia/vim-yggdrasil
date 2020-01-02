@@ -229,8 +229,6 @@ The following `<Plug>` mappings are available to interact with a tree buffer:
 <Plug>(yggdrasil-toggle-node)
 <Plug>(yggdrasil-open-node)
 <Plug>(yggdrasil-close-node)
-<Plug>(yggdrasil-open-subtree)
-<Plug>(yggdrasil-close-subtree)
 <Plug>(yggdrasil-execute-node)
 <Plug>(yggdrasil-wipe-tree)
 ```
