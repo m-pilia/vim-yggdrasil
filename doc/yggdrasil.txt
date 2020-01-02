@@ -169,24 +169,30 @@ yggdrasil#tree#new({provider})                            *yggdrasil#tree#new*
 ==============================================================================
 Commands                                                  *yggdrasil-commands*
 
-YggdrasilPlant {plugin_folder} [{plugin_name}]                *YggdrasilPlant*
+YggdrasilPlant -plugin_dir={plugin_folder} {args}             *YggdrasilPlant*
 
-    Embed Yggdrasil in a foreign plugin's file structure. The foreign plugin
-    file structure is rooted in {plugin_folder}, that contains the autoload,
-    plugin, doc folders etc. An optional {plugin_name} can be passed as
-    argument, if not the name of the {plugin_folder} will be used.
+    Embed Yggdrasil in a foreign plugin's file structure. The command will
+    install a copy of the Yggdrasil autoload files in the autoload folder of
+    the foreign plugin.
 
-    The command will install a copy of the Yggdrasil autoload files in the
-    autoload folder of the foreign plugin. The autoload prefix will be in
-    the form {plugin_name}#yggdrasil#file_name#function_name().
+    Supported arguments:
+      -plugin_dir={plugin_folder}
+        The foreign plugin file structure is rooted in {plugin_folder}, that
+        contains the autoload, plugin, doc folders etc.
+      -namespace={plugin_name}
+        An optional {plugin_name} can be passed as argument, if not the name
+        of the {plugin_folder} will be used.
+
+    The autoload prefix will be in the form:
+      {plugin_name}#file_name#function_name()
 
     Example:
 >
-    " Will install Yggdrasil in /foo/myplugin/autoload/myplugin/yggdrasil
-    YggdrasilPlant /foo/myplugin
+    " Will install Yggdrasil in /foo/myplugin/autoload/myplugin
+    YggdrasilPlant -plugin_dir=/foo/myplugin
 
-    " Will install Yggdrasil il /foo/myplugin/autoload/bar/yggdrasil
-    YggdrasilPlant /foo/myplugin bar
+    " Will install Yggdrasil il /foo/myplugin/autoload/my/namespace
+    YggdrasilPlant -plugin_dir=/foo/myplugin -namespace=my/namespace
 <
 
 ==============================================================================

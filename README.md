@@ -43,22 +43,30 @@ namespace (by default, the name of the root directory). For instance, if your
 plugin's root folder (containing the `autoload`, `plugin`, `doc` folders etc.)
 is `/foo/myplugin`, by calling:
 ```
-:YggdrasilPlant /foo/myplugin
+:YggdrasilPlant -plugin_dir=/foo/my/plugin
 ```
 a copy of Yggdrasil will be installed in
-`/foo/myplugin/autoload/myplugin/yggdrasil`, and it can be used as
+`/foo/myplugin/autoload/my/plugin`, and it can be used as
 ```viml
 " Call an Yggdrasil function in your plugin code
-call myplugin#yggdrasil#tree#new(provider)
+call my#plugin#tree#new(provider)
 ```
+Please note that the path passed to the `YggdrasilPlant` command shall not be
+enclosed within quotes, and white-space characters within the path need to be
+escaped with backslash.
 
 If for some reason you want to use a different namespace than the name of the
 root folder of your plugin, pass an optional argument to specify it. For
 instance, a call to
 ```
-:YggdrasilPlant /foo/myplugin bar
+:YggdrasilPlant -plugin_dir=/foo/myplugin -namespace=my/namespace
 ```
-will install a copy of Yggdrasil in `/foo/myplugin/autoload/bar/yggdrasil`.
+will install a copy of Yggdrasil in `/foo/myplugin/autoload/my/namespace`,
+and it can be used as
+```viml
+" Call an Yggdrasil function in your plugin code
+call my#namespace#tree#new(provider)
+```
 
 Example
 =======

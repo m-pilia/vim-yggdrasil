@@ -3,9 +3,10 @@ Before:
 
   let plugin_root = 'test/output/myplugin'
 
-  function! Assert_installation(plugin_root, plugin_prefix) abort
-    let l:installed_file = a:plugin_root . '/autoload/' . a:plugin_prefix . '/yggdrasil/tree.vim'
-    let l:expected_line = '\Vfunction! ' . a:plugin_prefix . '#yggdrasil#tree#new(provider) abort'
+  function! Assert_installation(plugin_root, namespace) abort
+    let l:installed_file = a:plugin_root . '/autoload/' . a:namespace . '/tree.vim'
+    let l:prefix = substitute(a:namespace, '[/\\]', '#', 'g')
+    let l:expected_line = '\Vfunction! ' . l:prefix . '#tree#new(provider) abort'
 
     Assert
     \   filereadable(l:installed_file),
@@ -20,24 +21,24 @@ Before:
 
 After:
   unlet! plugin_root
-  unlet! plugin_prefix
+  unlet! namespace
   delfunction Assert_installation
 
 Execute(Test install):
   call mkdir(plugin_root, 'p')
-  let plugin_prefix = fnamemodify(plugin_root, ':t')
+  let namespace = fnamemodify(plugin_root, ':t')
 
-  exec 'YggdrasilPlant ' . plugin_root
+  exec 'YggdrasilPlant -plugin_dir=' . plugin_root
 
-  call Assert_installation(plugin_root, plugin_prefix)
+  call Assert_installation(plugin_root, namespace)
 
 Execute(Test install with custom prefix):
   call mkdir(plugin_root, 'p')
-  let plugin_prefix = 'myprefix'
+  let namespace = 'my/prefix'
 
-  exec 'YggdrasilPlant ' . plugin_root . ' ' . plugin_prefix
+  exec 'YggdrasilPlant -plugin_dir=' . plugin_root . ' -namespace=' . namespace
 
-  call Assert_installation(plugin_root, plugin_prefix)
+  call Assert_installation(plugin_root, namespace)
 
 Execute(Test double loading):
   unlet g:vim_yggdrasil_plugin_loaded
@@ -50,5 +51,5 @@ Execute(Test double loading):
   AssertEqual 1, g:vim_yggdrasil_plugin_loaded
 
 Execute(Test exception on bad plugin root):
-  AssertThrows YggdrasilPlant test/output/myplugin
+  AssertThrows YggdrasilPlant -plugin_dir=test/output/myplugin
   AssertEqual 'Yggdrasil: cannot read target plugin directory', g:vader_exception
