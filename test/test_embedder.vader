@@ -1,11 +1,31 @@
 Before:
+  let b:script = 'autoload/yggdrasil/embedder.vim'
+
+  source test/utils.vim
+
   call system('rm -rf test/output/*')
 
-  let plugin_root = 'test/output/myplugin'
+  let opts = {
+  \   'plugin_root': 'test/output/myplugin',
+  \   'syntax_prefix': 'Yggdrasil',
+  \   'plug_prefix': 'yggdrasil',
+  \   'variable_prefix': 'yggdrasil',
+  \   'filetype': 'yggdrasil',
+  \ }
+  let opts.namespace = fnamemodify(opts.plugin_root, ':t')
 
-  function! Assert_installation(plugin_root, plugin_prefix) abort
-    let l:installed_file = a:plugin_root . '/autoload/' . a:plugin_prefix . '/yggdrasil/tree.vim'
-    let l:expected_line = '\Vfunction! ' . a:plugin_prefix . '#yggdrasil#tree#new(provider) abort'
+  call mkdir(opts.plugin_root, 'p')
+
+  function! Assert_installation(opts) abort
+    let l:installed_file = a:opts.plugin_root . '/autoload/' . a:opts.namespace . '/tree.vim'
+    let l:prefix = substitute(a:opts.namespace, '[/\\]', '#', 'g')
+    let l:expected_lines = {
+    \   '\Vfunction! ' . l:prefix . '#tree#new(provider) abort': 'Autoload prefix',
+    \   '\Vsetlocal filetype=' . a:opts.filetype: 'Filetype',
+    \   '\Vsyntax match ' . a:opts.syntax_prefix . 'MarkLeaf \+"•" contained': 'Syntax prefix',
+    \   '\Vnnoremap <silent> <buffer> <Plug>(' . a:opts.plug_prefix . '-toggle-node)': 'Plug prefix',
+    \   '\V:call b:' . a:opts.variable_prefix . '_tree.set_collapsed_under_cursor(-1)<cr>': 'Variable prefix',
+    \ }
 
     Assert
     \   filereadable(l:installed_file),
@@ -13,31 +33,70 @@ Before:
 
     let l:lines = readfile(l:installed_file)
 
-    Assert
-    \   len(filter(l:lines, {i, l -> l =~# l:expected_line})) > 0,
-    \   'Autoload prefix not set correctly in "' . l:installed_file . '"'
+    for [l:expected_line, l:error_type] in items(l:expected_lines)
+      Assert
+      \   len(filter(copy(l:lines), {i, l -> l =~# l:expected_line})) > 0,
+      \   l:error_type . ' not set correctly in "' . l:installed_file . '"'
+    endfor
   endfunction
 
 After:
-  unlet! plugin_root
-  unlet! plugin_prefix
+  call system('rm -rf test/output/*')
+
+  unlet! b:script
+  unlet! opts
+  unlet! result
+  unlet! Parse_arguments
+
   delfunction Assert_installation
 
+Execute(Test s:parse_arguments):
+  let Parse_arguments = GetFunction(b:script, 'parse_arguments')
+
+  let result = Parse_arguments(['foo', '-bar=baz'])
+
+  AssertEqual ['foo'], result[0]
+  AssertEqual {'bar': 'baz'}, result[1]
+
 Execute(Test install):
-  call mkdir(plugin_root, 'p')
-  let plugin_prefix = fnamemodify(plugin_root, ':t')
+  exec 'YggdrasilPlant -plugin_dir=' . opts.plugin_root
 
-  exec 'YggdrasilPlant ' . plugin_root
-
-  call Assert_installation(plugin_root, plugin_prefix)
+  call Assert_installation(opts)
 
 Execute(Test install with custom prefix):
-  call mkdir(plugin_root, 'p')
-  let plugin_prefix = 'myprefix'
+  let opts.namespace = 'my/prefix'
 
-  exec 'YggdrasilPlant ' . plugin_root . ' ' . plugin_prefix
+  exec 'YggdrasilPlant -plugin_dir=' . opts.plugin_root . ' -namespace=' . opts.namespace
 
-  call Assert_installation(plugin_root, plugin_prefix)
+  call Assert_installation(opts)
+
+Execute(Test install with custom syntax variable names):
+  let opts.syntax_prefix = 'SomePrefix'
+
+  exec 'YggdrasilPlant -plugin_dir=' . opts.plugin_root . ' -syntax_prefix=' . opts.syntax_prefix
+
+  call Assert_installation(opts)
+
+Execute(Test install with custom plug command names):
+  let opts.plug_prefix = 'some-prefix'
+
+  exec 'YggdrasilPlant -plugin_dir=' . opts.plugin_root . ' -plug_prefix=' . opts.plug_prefix
+
+  call Assert_installation(opts)
+
+Execute(Test install with custom buffer variable names):
+  let opts.variable_prefix = 'somePrefix'
+
+  exec 'YggdrasilPlant -plugin_dir=' . opts.plugin_root . ' -variable_prefix=' . opts.variable_prefix
+
+  call Assert_installation(opts)
+
+Execute(Test install with custom filetype name):
+  let opts.filetype = 'somefiletype'
+
+  exec 'YggdrasilPlant -plugin_dir=' . opts.plugin_root . ' -filetype=' . opts.filetype
+
+  call Assert_installation(opts)
 
 Execute(Test double loading):
   unlet g:vim_yggdrasil_plugin_loaded
@@ -50,5 +109,5 @@ Execute(Test double loading):
   AssertEqual 1, g:vim_yggdrasil_plugin_loaded
 
 Execute(Test exception on bad plugin root):
-  AssertThrows YggdrasilPlant test/output/myplugin
+  AssertThrows YggdrasilPlant -plugin_dir=test/output/myplugin/bad
   AssertEqual 'Yggdrasil: cannot read target plugin directory', g:vader_exception
