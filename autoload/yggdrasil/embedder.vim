@@ -70,6 +70,44 @@ function! s:install_autoload_file(file, install_options) abort
     \   {_, l -> substitute(l, '\V\C\<yggdrasil#', a:install_options.prefix, 'g')}
     \ )
 
+    " Replace syntax variable names
+    if has_key(a:install_options.kwargs, 'syntax_prefix')
+        let l:lines = map(
+        \   l:lines,
+        \   {_, l -> substitute(l, '\V\C\<Yggdrasil', a:install_options.kwargs.syntax_prefix, 'g')}
+        \ )
+    endif
+
+    " Replace plug names
+    if has_key(a:install_options.kwargs, 'plug_prefix')
+        let l:lines = map(
+        \   l:lines,
+        \   {_, l -> substitute(l,
+        \                      '\V\C<Plug>(yggdrasil-\(\[^)]\*\))',
+        \                      {m -> '<Plug>(' . a:install_options.kwargs.plug_prefix . '-' . m[1] . ')'},
+        \                      'g')}
+        \ )
+    endif
+
+    " Replace buffer variables
+    if has_key(a:install_options.kwargs, 'variable_prefix')
+        let l:lines = map(
+        \   l:lines,
+        \   {_, l -> substitute(l, '\V\Cb\:yggdrasil', 'b:' . a:install_options.kwargs.variable_prefix, 'g')}
+        \ )
+    endif
+
+    " Replace filetype
+    if has_key(a:install_options.kwargs, 'filetype')
+        let l:lines = map(
+        \   l:lines,
+        \   {_, l -> substitute(l,
+        \                       '\m\C\(filetype[^=]*=[^y]*\)yggdrasil',
+        \                       {m -> m[1] . a:install_options.kwargs.filetype},
+        \                       'g')}
+        \ )
+    endif
+
     " Write destination file
     call mkdir(fnamemodify(l:destination_file, ':h'), 'p')
     call writefile(l:lines, l:destination_file)

@@ -68,6 +68,9 @@ and it can be used as
 call my#namespace#tree#new(provider)
 ```
 
+For advanced installation options, please refer to [the
+documentation](https://github.com/m-pilia/vim-yggdrasil/blob/master/doc/yggdrasil.txt).
+
 Example
 =======
 

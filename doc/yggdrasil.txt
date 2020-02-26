@@ -175,16 +175,34 @@ YggdrasilPlant -plugin_dir={plugin_folder} {args}             *YggdrasilPlant*
     install a copy of the Yggdrasil autoload files in the autoload folder of
     the foreign plugin.
 
-    Supported arguments:
+    The autoload prefix will be in the form:
+      {plugin_name}#file_name#function_name()
+    where {plugin_name} is the name of the foreign plugin, unless the
+    `-namespace=` argument is provided (see Optional arguments below).
+
+    Mandatory arguments:
       -plugin_dir={plugin_folder}
         The foreign plugin file structure is rooted in {plugin_folder}, that
         contains the autoload, plugin, doc folders etc.
-      -namespace={plugin_name}
-        An optional {plugin_name} can be passed as argument, if not the name
-        of the {plugin_folder} will be used.
 
-    The autoload prefix will be in the form:
-      {plugin_name}#file_name#function_name()
+    Optional arguments:
+      -filetype={filetype}
+        An optional name for the {filetype} used in Yggdrasil buffers can be
+        passed as an argument.
+      -namespace={plugin_name}
+        An optional {plugin_name} can be passed as an argument, if not the
+        name of the {plugin_folder} will be used.
+      -plug_prefix={plug_prefix}
+        A custom prefix for <Plug> mappings defined in Yggdrasil buffers, if
+        not all <Plug> mappings will have the form `<Plug>(yggdrasil-...)`.
+      -syntax_prefix={syntax_prefix}
+        A custom prefix for the names of syntax regions in Yggdrasil buffers.
+        If not provided, all regions have camel-case identifiers in the
+        form `Yggdrasil...`.
+      -variable_prefix={variable_prefix}
+        A custom prefix for the buffer variables defined in Yggdrasil
+        buffers. If not provided, all variables have names in the form
+        `b:yggdrasil_...`.
 
     Example:
 >
