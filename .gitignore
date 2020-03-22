@@ -3,3 +3,4 @@ test/vimtest
 profile_file*
 .coverage_covimerage
 coverage.xml
+codecov_validation
