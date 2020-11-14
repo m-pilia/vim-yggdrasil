@@ -222,7 +222,6 @@ function! s:filetype_settings() abort
     setlocal foldmethod=manual
     setlocal nobuflisted
     setlocal nofoldenable
-    setlocal nohlsearch
     setlocal nolist
     setlocal nomodifiable
     setlocal nonumber
