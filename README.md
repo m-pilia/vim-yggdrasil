@@ -1,6 +1,6 @@
 vim-yggdrasil: general purpose tree viewer for vim/neovim
 ===============================================================
-[![Travis CI Build Status](https://travis-ci.org/m-pilia/vim-yggdrasil.svg?branch=master)](https://travis-ci.org/m-pilia/vim-yggdrasil)
+[![Checks](https://github.com/m-pilia/vim-yggdrasil/workflows/Checks/badge.svg)](https://github.com/m-pilia/vim-yggdrasil/actions/workflows/checks.yml)
 [![codecov](https://codecov.io/gh/m-pilia/vim-yggdrasil/branch/master/graph/badge.svg)](https://codecov.io/gh/m-pilia/vim-yggdrasil/branch/master)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/m-pilia/vim-yggdrasil/blob/master/LICENSE)
 

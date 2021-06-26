@@ -1,0 +1,7 @@
+!.codecov.yml
+!.coveragerc
+!.github/
+!.gitignore
+!.gitmodules
+!.ignore
+!.travis.yml
