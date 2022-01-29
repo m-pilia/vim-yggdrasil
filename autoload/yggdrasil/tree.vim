@@ -163,7 +163,7 @@ function! s:tree_render(tree) abort
     setlocal modifiable
     silent 1,$delete _
     silent 0put=l:text
-    $d
+    $d_
     setlocal nomodifiable
 
     call setpos('.', l:cursor)
